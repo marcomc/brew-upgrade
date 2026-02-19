@@ -14,6 +14,7 @@ EMAIL_FROM_NAME="brew-upgrade"
 EMAIL_SUBJECT_PREFIX="[brew-upgrade]"
 EMAIL_CONFIG="${HOME}/.config/msmtp/config"
 DRY_RUN_EMAIL=false
+SCRIPT_VERSION="0.3.1"
 
 BREW_UPGRADE_ARGS=()
 STDOUT_LINES=()
@@ -34,6 +35,7 @@ Options:
   --email-subject-prefix <text>   Subject prefix.
   --email-config <path>           msmtp config path.
   --dry-run-email                 Print email payload and skip send.
+  --version                       Print script version.
   --help                          Show this help message.
 
 Unknown options are passed through to `brew upgrade`.
@@ -408,6 +410,10 @@ while [[ "$#" -gt 0 ]]; do
     --dry-run-email)
       DRY_RUN_EMAIL=true
       shift
+      ;;
+    --version)
+      printf 'brew-upgrade %s\n' "${SCRIPT_VERSION}"
+      exit 0
       ;;
     --help)
       print_usage

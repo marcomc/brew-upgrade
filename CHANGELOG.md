@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.1] - 2026-02-19
+
+### Added (CLI)
+
+- `--version` flag to print the script version and exit.
+
+### Verified
+
+- `--help` usage output is available and up to date.
+
 ## [0.3.0] - 2026-02-19
 
 ### Added (Config)
