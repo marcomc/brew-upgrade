@@ -1,0 +1,26 @@
+# brew-upgrade user defaults
+#
+# Install for current user:
+#   cp .brew-upgrade.conf.example ~/.brew-upgrade.conf
+#
+# Format is simple KEY=VALUE (bash-style env file, no sections).
+# Empty/commented keys are ignored.
+
+# Log file path used by the script.
+HOMEBREW_LOG="$HOME/Library/Logs/brew-upgrade.log"
+
+# Homebrew executable path.
+BREW_PATH="/opt/homebrew/bin/brew"
+
+# Default recipient email for summary reports.
+# Can be any mailbox (Gmail, Outlook, custom domain, etc.).
+EMAIL_TO=""
+
+# Default From display name.
+EMAIL_FROM_NAME="brew-upgrade"
+
+# Default mail subject prefix.
+EMAIL_SUBJECT_PREFIX="[brew-upgrade]"
+
+# msmtp configuration file path.
+EMAIL_CONFIG="$HOME/.config/msmtp/config"
