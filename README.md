@@ -31,6 +31,18 @@ Install behavior:
 - Installs script to `~/.local/bin/brew-upgrade`
 - Seeds user config from `.brew-upgrade.conf.example` to `~/.brew-upgrade.conf` **only if missing**
 
+To also install and load the LaunchAgent for scheduled runs:
+
+```bash
+make launchagent-install
+```
+
+To unload and remove the LaunchAgent:
+
+```bash
+make launchagent-uninstall
+```
+
 ## User Configuration File
 
 `brew-upgrade` supports a user config file in the same style as `raiplaysound-cli`:
@@ -232,10 +244,47 @@ chmod 600 ~/.config/msmtp/config ~/.config/msmtp/google-oauth-client.json
 chmod 700 ~/.local/bin/msmtp-gmail-oauth2-token
 ```
 
-## LaunchAgent Example
+## LaunchAgent
 
-Example LaunchAgent (`~/Library/LaunchAgents/com.homebrew.upgrade.plist`) that runs
-at 07:00, includes `--greedy`, and sends email summary:
+The repository ships a ready-to-use template at
+`launchagent/com.homebrew.upgrade.plist`. It runs `brew-upgrade` daily at 07:00
+with `--greedy --email-summary`. Email recipient and other options are read from
+`~/.brew-upgrade.conf`.
+
+Install and load in one step:
+
+```bash
+make launchagent-install
+```
+
+`make launchagent-install` substitutes `__HOME__` with your actual `$HOME` path,
+writes the plist to `~/Library/LaunchAgents/com.homebrew.upgrade.plist`, and
+bootstraps the agent. Re-running the command updates and reloads it safely.
+
+To unload and remove:
+
+```bash
+make launchagent-uninstall
+```
+
+### Why EnvironmentVariables / PATH is required
+
+LaunchAgents run in a minimal shell environment where `PATH` contains only
+`/usr/bin:/bin:/usr/sbin:/sbin`. Tools installed by Homebrew (such as `msmtp`,
+`bw`, `jq`) live in `/opt/homebrew/bin` and are invisible to the agent without
+an explicit `PATH`. The template sets:
+
+```text
+/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+```
+
+Without this, `msmtp` is not found and the email step is silently skipped with a
+warning in the log (`WARNING: msmtp is not installed or not in PATH`).
+
+### Template
+
+`launchagent/com.homebrew.upgrade.plist` (the `__HOME__` token is expanded by
+`make launchagent-install`):
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -247,18 +296,16 @@ at 07:00, includes `--greedy`, and sends email summary:
 
     <key>ProgramArguments</key>
     <array>
-      <string>/Users/your-user/.local/bin/brew-upgrade</string>
+      <string>__HOME__/.local/bin/brew-upgrade</string>
       <string>--greedy</string>
       <string>--email-summary</string>
-      <string>--email-to</string>
-      <string>you@example.com</string>
-      <string>--email-from-name</string>
-      <string>YOUR_SENDER_NAME via brew-upgrade</string>
-      <string>--email-subject-prefix</string>
-      <string>[brew-upgrade]</string>
-      <string>--email-config</string>
-      <string>/Users/your-user/.config/msmtp/config</string>
     </array>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+      <key>PATH</key>
+      <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
 
     <key>StartCalendarInterval</key>
     <dict>
@@ -271,12 +318,11 @@ at 07:00, includes `--greedy`, and sends email summary:
 </plist>
 ```
 
-Load/update:
+To customise schedule, arguments, or install path, edit the template before
+running `make launchagent-install`, or override variables:
 
 ```bash
-plutil -lint ~/Library/LaunchAgents/com.homebrew.upgrade.plist
-launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.homebrew.upgrade.plist 2>/dev/null || true
-launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.homebrew.upgrade.plist
+make launchagent-install LAUNCHAGENT_LABEL=com.myhost.brew-upgrade
 ```
 
 ## Security Notes
@@ -290,9 +336,10 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.homebrew.upgrade.pli
 ## Project Files
 
 - `brew-upgrade.sh`: main script
+- `launchagent/com.homebrew.upgrade.plist`: LaunchAgent template for scheduled runs
 - `README.md`: documentation
 - `CHANGELOG.md`: version history
-- `Makefile`: install/uninstall helper (also seeds user config)
+- `Makefile`: install/uninstall helper (also seeds user config and manages LaunchAgent)
 - `.brew-upgrade.conf.example`: sample user configuration file
 - `AGENTS.md`: local contributor instructions
 - `.markdownlint.json`: markdown lint config

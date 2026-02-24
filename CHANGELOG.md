@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.2] - 2026-02-24
+
+### Fixed
+
+- LaunchAgent now sets `EnvironmentVariables` with `PATH` including
+  `/opt/homebrew/bin` so that `msmtp` and other Homebrew-installed tools
+  (e.g. `bw`, `jq`) are found at runtime. Without this, `msmtp` was silently
+  skipped and no summary email was sent when the job ran via launchd.
+
+### Added
+
+- `launchagent/com.homebrew.upgrade.plist`: LaunchAgent template with `__HOME__`
+  placeholder and correct `EnvironmentVariables/PATH`.
+- `make launchagent-install`: expands `__HOME__`, writes the plist to
+  `~/Library/LaunchAgents/`, and bootstraps the agent. Safe to re-run.
+- `make launchagent-uninstall`: unloads and removes the installed plist.
+
+### Changed
+
+- README LaunchAgent section rewritten: explains the PATH requirement, documents
+  `make launchagent-install` / `make launchagent-uninstall`, and shows the
+  template with `EnvironmentVariables`.
+
 ## [0.3.1] - 2026-02-19
 
 ### Added (CLI)
