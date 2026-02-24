@@ -14,7 +14,7 @@ EMAIL_FROM_NAME="brew-upgrade"
 EMAIL_SUBJECT_PREFIX="[brew-upgrade]"
 EMAIL_CONFIG="${HOME}/.config/msmtp/config"
 DRY_RUN_EMAIL=false
-SCRIPT_VERSION="0.3.1"
+SCRIPT_VERSION="0.3.2"
 
 BREW_UPGRADE_ARGS=()
 STDOUT_LINES=()
