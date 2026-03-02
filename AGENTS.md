@@ -11,3 +11,4 @@
 - Always run `markdownlint --fix` for modified Markdown files.
 - Re-run `markdownlint` after fixing to confirm zero remaining issues.
 - Line-length (`MD013`) is intentionally disabled in this repository config.
+- Do not introduce personal paths or identifiers (email, home directories, etc.) into documentation; the only exception is referencing GitHub handles or URLs in copyright statements.

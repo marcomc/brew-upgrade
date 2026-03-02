@@ -157,7 +157,11 @@ In **Google Auth Platform**:
 2. Choose application type: **Desktop app** (correct for CLI/installed-app OAuth flow).
 3. Save `client_id` and `client_secret`.
 
-#### Stage 4 — Secure secret storage (Bitwarden)
+#### Stage 4 — Secure secret storage
+
+The helper needs a fresh OAuth2 refresh token for every run. The recommended workflow stores the credentials in Bitwarden, but the LaunchAgent cannot unlock Bitwarden interactively, so the non-interactive path stores the refresh token in the Keychain instead.
+
+##### Bitwarden (interactive setup)
 
 Create a Bitwarden item (Secure Note), e.g. `gmail-msmtp-oauth2`, with fields:
 
@@ -166,7 +170,33 @@ Create a Bitwarden item (Secure Note), e.g. `gmail-msmtp-oauth2`, with fields:
 - `refresh_token`
 - `gmail_address`
 
-Store real values there (no placeholders in production).
+Store real values there and unlock the vault once per session when you run `brew-upgrade` manually. The token helper script (`~/.local/bin/msmtp-gmail-oauth2-token`) reads these fields via `bw` so you can keep the vault locked outside of interactive troubleshooting.
+
+##### Keychain (non-interactive LaunchAgent)
+
+If the LaunchAgent needs to send email without an unlocked Bitwarden session, keep the refresh token in the macOS Keychain and point `msmtp` at a helper that exchanges the stored value for a fresh access token. The repository ships `msmtp-gmail-oauth2-token.sh`, which is the working helper template described below. `make token-helper-install` prompts for the email address that will be used as the Keychain account—and the helper uses the same value when fetching the refresh token.
+
+1. Add the refresh token to Keychain (updates if the entry exists). Reuse the same account email that `make token-helper-install` prompts for (stored under `${PREFIX:-$HOME/.local}/etc/msmtp-gmail-oauth2-token.env`), so the helper and Keychain stay in sync. The service name is standardized to `gmail-msmtp-oauth2`.
+
+```bash
+security add-generic-password -a your.email@example.com -s gmail-msmtp-oauth2 -w "<refresh-token>" -U
+```
+
+1. Install the helper template (the script already does the token exchange) with:
+
+```bash
+make token-helper-install
+```
+
+This copies `msmtp-gmail-oauth2-token.sh` into `~/.local/bin/msmtp-gmail-oauth2-token`, creates `~/.local/etc/msmtp-gmail-oauth2-token.env` with the account you enter, and ensures the helper uses the OAuth client config and Keychain entry. Use the same email when running `security add-generic-password` so the helper finds the stored refresh token.
+
+1. Point `passwordeval` in `~/.config/msmtp/config` to the helper (`passwordeval "/Users/<you>/.local/bin/msmtp-gmail-oauth2-token"`). When a new refresh token is required (for example, Google reports `invalid_grant`), rerun the OAuth flow:
+
+```bash
+security add-generic-password -a your.email@example.com -s gmail-msmtp-oauth2 -w "$(oauth2l fetch --credentials ~/.config/msmtp/google-oauth-client.json --scope https://mail.google.com/ --output_format json --cache= | awk '/^{/{flag=1} flag {print}' | jq -r '.refresh_token')" -U
+```
+
+This forces the browser consent flow, extracts just the `refresh_token` from the JSON output, and rewrites the Keychain entry; the helper then continues to fetch a valid access token without any interactive Bitwarden unlock.
 
 #### Stage 5 — Local config files
 
@@ -190,6 +220,14 @@ passwordeval   "/Users/<you>/.local/bin/msmtp-gmail-oauth2-token"
 
 account default : gmail-oauth2
 ```
+
+Validate the transport works:
+
+```bash
+printf "Subject: brew-upgrade test\n\nMail works" | msmtp --file ~/.config/msmtp/config your.email@example.com
+```
+
+The helper emits a `ya29…` access token from the Keychain refresh token; `msmtp` should exit `0` without error. If it fails, rerun the helper directly to see the OAuth exchange output and ensure the Keychain entry contains a valid refresh token.
 
 And create an OAuth client JSON file used by token tools (example path):
 
@@ -344,3 +382,4 @@ make launchagent-install LAUNCHAGENT_LABEL=com.myhost.brew-upgrade
 - `AGENTS.md`: local contributor instructions
 - `.markdownlint.json`: markdown lint config
 - `.gitignore`: common ignore rules
+- `msmtp-gmail-oauth2-token.sh`: Keychain-backed OAuth helper template that exchanges the refresh token for access tokens (installable via `make token-helper-install`)

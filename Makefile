@@ -4,12 +4,16 @@ TARGET ?= brew-upgrade
 SRC ?= brew-upgrade.sh
 CONFIG_SAMPLE ?= .brew-upgrade.conf.example
 CONFIG_DEST ?= $(HOME)/.brew-upgrade.conf
+TOKEN_HELPER_SRC ?= msmtp-gmail-oauth2-token.sh
+TOKEN_HELPER_DEST ?= $(BINDIR)/msmtp-gmail-oauth2-token
+TOKEN_HELPER_ENV_DIR ?= $(PREFIX)/etc
+TOKEN_HELPER_ENV ?= $(TOKEN_HELPER_ENV_DIR)/msmtp-gmail-oauth2-token.env
 
 LAUNCHAGENT_TEMPLATE ?= launchagent/com.homebrew.upgrade.plist
 LAUNCHAGENT_LABEL ?= com.homebrew.upgrade
 LAUNCHAGENT_DEST ?= $(HOME)/Library/LaunchAgents/$(LAUNCHAGENT_LABEL).plist
 
-.PHONY: help install uninstall launchagent-install launchagent-uninstall
+.PHONY: help install uninstall launchagent-install launchagent-uninstall token-helper-install
 
 help: ## Show available targets
 	@awk 'BEGIN { FS = ":.*##" } /^[a-zA-Z_-]+:.*##/ { printf "  %-24s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -24,6 +28,21 @@ install: ## Install script and seed user config
 		echo "Config already exists at $(CONFIG_DEST) (left unchanged)"; \
 	fi
 	@echo "Installed $(TARGET) to $(BINDIR)/$(TARGET)"
+
+token-helper-install: ## Install OAuth helper that exchanges the Keychain refresh token
+	@mkdir -p "$(BINDIR)"
+	install -m 700 "$(TOKEN_HELPER_SRC)" "$(TOKEN_HELPER_DEST)"
+	@mkdir -p "$(TOKEN_HELPER_ENV_DIR)"
+	@printf "Keychain account email [your.email@example.com]: " ; \
+	read -r email; \
+	if [ -z "$$email" ]; then \
+		email="your.email@example.com"; \
+	fi; \
+	printf 'MSMTP_KEYCHAIN_ACCOUNT=%s\n' "$$email" > "$(TOKEN_HELPER_ENV)"; \
+	printf 'MSMTP_KEYCHAIN_SERVICE=gmail-msmtp-oauth2\n' >> "$(TOKEN_HELPER_ENV)"; \
+	chmod 600 "$(TOKEN_HELPER_ENV)";
+	@echo "Installed msmtp helper to $(TOKEN_HELPER_DEST)"
+	@echo "Keychain helper config written to $(TOKEN_HELPER_ENV)"
 
 uninstall: ## Remove installed script
 	rm -f "$(BINDIR)/$(TARGET)"
