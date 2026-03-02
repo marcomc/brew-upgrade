@@ -25,6 +25,28 @@ All notable changes to this project will be documented in this file.
   `make launchagent-install` / `make launchagent-uninstall`, and shows the
   template with `EnvironmentVariables`.
 
+## [0.3.3] - 2026-03-02
+
+### Added
+
+- `msmtp-gmail-oauth2-token.sh`: Keychain-backed OAuth helper that exchanges a
+  stored refresh token for a Gmail access token so `msmtp` can reload without
+  unlocking Bitwarden.
+- `make token-helper-install`: installs the helper to `~/.local/bin`, prompts
+  for the Keychain account email, and writes `~/.local/etc/msmtp-gmail-oauth2-token.env`
+  so the helper consistently reads the right entry.
+- README sections covering Gmail OAuth now document the Keychain workflow,
+  helper install, token refresh command (`oauth2l … | jq -r '.refresh_token'`),
+  and msmtp transport test.
+
+### Changed
+
+- README now references placeholder emails (`your.email@example.com`) and
+  avoids user-specific identifiers, while AGENTS.md explicitly forbids personal
+  data in documentation (GitHub references are still allowed).
+- `make token-helper-install` prints both the helper path and the env file path
+  that stores the Keychain account info.
+
 ## [0.3.1] - 2026-02-19
 
 ### Added (CLI)
