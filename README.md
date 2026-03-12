@@ -7,6 +7,8 @@ plain-text summary email through `msmtp`.
 ## Features
 
 - Runs Homebrew update and upgrade in one command.
+- Supports `--dry-run` to print pending upgrades without installing anything.
+- Supports `--info <package>` for formulae and casks.
 - Appends execution logs to `~/Library/Logs/brew-upgrade.log`.
 - Captures both `stdout` and `stderr` from Homebrew operations into the log.
 - Forwards unknown options to `brew upgrade` (example: `--greedy`).
@@ -84,7 +86,12 @@ Then edit values for your environment (paths, sender name, recipient email, etc.
 - `--email-from-name <display name>`: Display name for `From` header.
 - `--email-subject-prefix <text>`: Subject prefix.
 - `--email-config <path>`: Path to `msmtp` config.
+- `--dry-run`: Print the updates Homebrew would install, but do not install them.
+- `--info <package>`: Show the package description, the files or install artifacts
+  Homebrew would install, and changelog details since the installed version
+  when release notes are available.
 - `--dry-run-email`: Print the generated email payload and skip sending.
+- `--version`: Print the script version.
 - `--help`: Show usage.
 
 Unknown options are passed to `brew upgrade`.
@@ -95,6 +102,19 @@ Run normally:
 
 ```bash
 ./brew-upgrade.sh
+```
+
+See pending upgrades without installing them:
+
+```bash
+./brew-upgrade.sh --dry-run
+```
+
+Inspect a formula or cask before upgrading:
+
+```bash
+./brew-upgrade.sh --info gh
+./brew-upgrade.sh --info 1password
 ```
 
 Pass Homebrew options:

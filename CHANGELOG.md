@@ -2,28 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.3.2] - 2026-02-24
-
-### Fixed
-
-- LaunchAgent now sets `EnvironmentVariables` with `PATH` including
-  `/opt/homebrew/bin` so that `msmtp` and other Homebrew-installed tools
-  (e.g. `bw`, `jq`) are found at runtime. Without this, `msmtp` was silently
-  skipped and no summary email was sent when the job ran via launchd.
+## [0.4.0] - 2026-03-12
 
 ### Added
 
-- `launchagent/com.homebrew.upgrade.plist`: LaunchAgent template with `__HOME__`
-  placeholder and correct `EnvironmentVariables/PATH`.
-- `make launchagent-install`: expands `__HOME__`, writes the plist to
-  `~/Library/LaunchAgents/`, and bootstraps the agent. Safe to re-run.
-- `make launchagent-uninstall`: unloads and removes the installed plist.
+- `--dry-run` is now a documented first-class CLI flag. It runs `brew update`
+  followed by `brew upgrade --dry-run`, prints the pending upgrades to stdout,
+  and exits without installing anything.
+- `--info <package>` inspects a formula or cask and prints its description,
+  the files or install artifacts Homebrew would install, and best-effort
+  changelog details since the currently installed version when release notes
+  are discoverable.
 
 ### Changed
 
-- README LaunchAgent section rewritten: explains the PATH requirement, documents
-  `make launchagent-install` / `make launchagent-uninstall`, and shows the
-  template with `EnvironmentVariables`.
+- Dry-run mode now builds a dry-run-specific summary and notification text so
+  the script no longer reports a successful install when nothing was installed.
+- `--info` resolves formula metadata from bottle archives and cask metadata
+  from declared artifacts, while changelog lookup now attempts GitHub release
+  notes when the package metadata points to a GitHub repository.
+- `brew-upgrade.sh` now reports the new release version, `0.4.0`.
 
 ## [0.3.3] - 2026-03-02
 
@@ -46,6 +44,29 @@ All notable changes to this project will be documented in this file.
   data in documentation (GitHub references are still allowed).
 - `make token-helper-install` prints both the helper path and the env file path
   that stores the Keychain account info.
+
+## [0.3.2] - 2026-02-24
+
+### Fixed
+
+- LaunchAgent now sets `EnvironmentVariables` with `PATH` including
+  `/opt/homebrew/bin` so that `msmtp` and other Homebrew-installed tools
+  (e.g. `bw`, `jq`) are found at runtime. Without this, `msmtp` was silently
+  skipped and no summary email was sent when the job ran via launchd.
+
+### Added
+
+- `launchagent/com.homebrew.upgrade.plist`: LaunchAgent template with `__HOME__`
+  placeholder and correct `EnvironmentVariables/PATH`.
+- `make launchagent-install`: expands `__HOME__`, writes the plist to
+  `~/Library/LaunchAgents/`, and bootstraps the agent. Safe to re-run.
+- `make launchagent-uninstall`: unloads and removes the installed plist.
+
+### Changed
+
+- README LaunchAgent section rewritten: explains the PATH requirement, documents
+  `make launchagent-install` / `make launchagent-uninstall`, and shows the
+  template with `EnvironmentVariables`.
 
 ## [0.3.1] - 2026-02-19
 
